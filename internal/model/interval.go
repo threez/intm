@@ -43,7 +43,8 @@ func (i Interval) Validate() error {
 // overlap with provided interval
 func (i Interval) HasOverlap(o *Interval) bool {
 	return (i.Start < o.Start && o.Start <= i.End) ||
-		(i.Start < o.End && o.End <= i.End)
+		(i.Start < o.End && o.End <= i.End) ||
+		(o.Start < i.Start && i.End < o.End)
 }
 
 // IsBefore returns true in case the passed interval is after
