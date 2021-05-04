@@ -15,6 +15,13 @@ type Interval struct {
 	End   int
 }
 
+func NewInterval(start, end int) *Interval {
+	return &Interval{
+		Start: start,
+		End:   end,
+	}
+}
+
 func (i Interval) String() string {
 	return fmt.Sprintf("%d %d", i.Start, i.End)
 }
@@ -32,9 +39,24 @@ func (i Interval) Validate() error {
 	return nil
 }
 
-// IsOverLapping returns true if there is any
+// HasOverlap returns true if there is any
 // overlap with provided interval
 func (i Interval) HasOverlap(o *Interval) bool {
 	return (i.Start < o.Start && o.Start <= i.End) ||
 		(i.Start < o.End && o.End <= i.End)
+}
+
+// IsBefore returns true in case the passed interval is after
+func (i Interval) Before(o *Interval) bool {
+	return i.Start < o.Start
+}
+
+// Extend extend the current interval with the provided interval
+func (i *Interval) Extend(o *Interval) {
+	if o.Start < i.Start {
+		i.Start = o.Start
+	}
+	if o.End > i.End {
+		i.End = o.End
+	}
 }
