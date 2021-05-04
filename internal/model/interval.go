@@ -26,8 +26,15 @@ func (i Interval) Validate() error {
 	if i.Start == i.End {
 		return ErrEndIsEqualToStart
 	}
-	if i.End > i.Start {
+	if i.End < i.Start {
 		return ErrEndBeforeStart
 	}
 	return nil
+}
+
+// IsOverLapping returns true if there is any
+// overlap with provided interval
+func (i Interval) HasOverlap(o *Interval) bool {
+	return (i.Start < o.Start && o.Start <= i.End) ||
+		(i.Start < o.End && o.End <= i.End)
 }

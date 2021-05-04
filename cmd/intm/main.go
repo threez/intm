@@ -34,6 +34,11 @@ func main() {
 			fmt.Fprintf(os.Stderr, "SKIP %v\n", err)
 			continue
 		}
+		err = i.Validate()
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "INVALID %v\n", err)
+			continue
+		}
 
 		m.MergeInterval(i)
 	}
