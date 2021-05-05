@@ -34,6 +34,8 @@ func main() {
 		m = &merger.Noop{}
 	case "simple":
 		m = merger.NewSimple()
+	case "btree":
+		m = merger.NewBtree()
 	default:
 		fmt.Fprintf(os.Stderr, "unknown merge algorithm %q", alg)
 		os.Exit(1)

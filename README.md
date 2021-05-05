@@ -44,9 +44,9 @@ After all intervals were processed by the merger the result is returned on stdou
 
 ### Merger
 
-* `noop` implements a simple none merge implementation
-* `simple` sorts the list and uses a simple extension loop
-* `btree` sorts while merging in order to save memory
+* `noop` implements a simple none merge implementation. Could be used to parse the file and keep all valid records.
+* `simple` sorts the list and uses a simple extension loop.
+* `btree` sorts while merging in order to save memory.
 
 ### Reader
 
