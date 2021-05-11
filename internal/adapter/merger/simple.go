@@ -7,7 +7,7 @@ import (
 )
 
 // Simple ignores memory and cpu constraints.
-// Alg should be O(n*log(n)*log(n)) due the use of stable
+// Alg should be O(n*log(n)) due the use of search
 // search. Memory can be max O(2n) since the new list is
 // created next to the existing list.
 type Simple struct {
@@ -24,7 +24,7 @@ func (m *Simple) MergeInterval(i *model.Interval) {
 
 func (m *Simple) Result() []*model.Interval {
 	// Step 1. sort the input
-	sort.Stable(model.List(m.intervals))
+	sort.Sort(model.List(m.intervals))
 
 	// Step 2. extend ranges until not longer possible
 	var mergedList []*model.Interval
