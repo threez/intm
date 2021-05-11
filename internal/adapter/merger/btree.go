@@ -51,12 +51,12 @@ func (m *Node) MergeInterval(i *model.Interval) {
 		// before or after nodes
 		if m.Before != nil && m.Before.Interval.HasOverlap(m.Interval) {
 			m.Interval.Extend(m.Before.Interval)
-			m.Before = nil
+			m.Before = m.Before.Before
 		}
 
 		if m.After != nil && m.After.Interval.HasOverlap(m.Interval) {
 			m.Interval.Extend(m.After.Interval)
-			m.After = nil
+			m.After = m.After.After
 		}
 
 		return
