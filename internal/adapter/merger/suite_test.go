@@ -12,62 +12,83 @@ type MergerTestSuite struct {
 	suite.Suite
 }
 
-func (suite *MergerTestSuite) TestAll() {
+func (suite *MergerTestSuite) TestEmpty() {
 	assert.Equal(suite.T(), []*model.Interval(nil), suite.Merger.Result())
 }
 
+func (suite *MergerTestSuite) test(in, out [][2]int) {
+	for _, v := range in {
+		suite.Merger.MergeInterval(model.NewInterval(v[0], v[1]))
+	}
+	expected := make([]string, len(out))
+	for i, v := range out {
+		expected[i] = model.NewInterval(v[0], v[1]).String()
+	}
+	actualResult := suite.Merger.Result()
+	actual := make([]string, len(actualResult))
+	for i, v := range actualResult {
+		actual[i] = v.String()
+	}
+	assert.Equal(suite.T(), expected, actual)
+}
+
 func (suite *MergerTestSuite) TestOne() {
-	suite.Merger.MergeInterval(model.NewInterval(25, 30))
-	assert.Equal(suite.T(), []*model.Interval{
-		model.NewInterval(25, 30),
-	}, suite.Merger.Result())
+	suite.test([][2]int{
+		{25, 30},
+	}, [][2]int{
+		{25, 30},
+	})
 }
 
 func (suite *MergerTestSuite) TestSimple() {
-	suite.Merger.MergeInterval(model.NewInterval(25, 30))
-	suite.Merger.MergeInterval(model.NewInterval(2, 19))
-	suite.Merger.MergeInterval(model.NewInterval(14, 23))
-	suite.Merger.MergeInterval(model.NewInterval(4, 8))
-	assert.Equal(suite.T(), []*model.Interval{
-		model.NewInterval(2, 23),
-		model.NewInterval(25, 30),
-	}, suite.Merger.Result())
+	suite.test([][2]int{
+		{25, 30},
+		{2, 19},
+		{14, 23},
+		{4, 8},
+	}, [][2]int{
+		{2, 23},
+		{25, 30},
+	})
 }
 
 func (suite *MergerTestSuite) TestExtended() {
-	suite.Merger.MergeInterval(model.NewInterval(25, 30))
-	suite.Merger.MergeInterval(model.NewInterval(2, 19))
-	suite.Merger.MergeInterval(model.NewInterval(14, 23))
-	suite.Merger.MergeInterval(model.NewInterval(4, 8))
-	suite.Merger.MergeInterval(model.NewInterval(35, 40))
-	suite.Merger.MergeInterval(model.NewInterval(1, 50))
-	suite.Merger.MergeInterval(model.NewInterval(32, 34))
-	assert.Equal(suite.T(), []*model.Interval{
-		model.NewInterval(1, 50),
-	}, suite.Merger.Result())
+	suite.test([][2]int{
+		{25, 30},
+		{2, 19},
+		{14, 23},
+		{4, 8},
+		{35, 40},
+		{1, 50},
+		{32, 34},
+	}, [][2]int{
+		{1, 50},
+	})
 }
 
 func (suite *MergerTestSuite) TestBad() {
-	suite.Merger.MergeInterval(model.NewInterval(5, 6))
-	suite.Merger.MergeInterval(model.NewInterval(3, 4))
-	suite.Merger.MergeInterval(model.NewInterval(1, 2))
-	suite.Merger.MergeInterval(model.NewInterval(4, 6))
-	assert.Equal(suite.T(), []*model.Interval{
-		model.NewInterval(1, 2),
-		model.NewInterval(3, 6),
-	}, suite.Merger.Result())
+	suite.test([][2]int{
+		{5, 6},
+		{3, 4},
+		{1, 2},
+		{4, 6},
+	}, [][2]int{
+		{1, 2},
+		{3, 6},
+	})
 }
 
 func (suite *MergerTestSuite) TestMoreBad() {
-	suite.Merger.MergeInterval(model.NewInterval(50, 60))
-	suite.Merger.MergeInterval(model.NewInterval(50, 55))
-	suite.Merger.MergeInterval(model.NewInterval(45, 48))
-	suite.Merger.MergeInterval(model.NewInterval(10, 24))
-	suite.Merger.MergeInterval(model.NewInterval(10, 22))
-	suite.Merger.MergeInterval(model.NewInterval(10, 20))
-	suite.Merger.MergeInterval(model.NewInterval(30, 60))
-	assert.Equal(suite.T(), []*model.Interval{
-		model.NewInterval(10, 24),
-		model.NewInterval(30, 60),
-	}, suite.Merger.Result())
+	suite.test([][2]int{
+		{50, 60},
+		{10, 24},
+		{50, 55},
+		{10, 20},
+		{45, 48},
+		{10, 22},
+		{30, 60},
+	}, [][2]int{
+		{10, 24},
+		{30, 60},
+	})
 }

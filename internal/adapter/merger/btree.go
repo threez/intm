@@ -1,6 +1,7 @@
 package merger
 
 import (
+	"github.com/google/btree"
 	"github.com/threez/intm/internal/model"
 )
 
@@ -9,81 +10,70 @@ import (
 // memory while processing. Processing is O(n*log(n)),
 // Memory is O(n)
 type Btree struct {
-	root *Node
+	tree *btree.BTree
 }
 
 func NewBtree() *Btree {
-	return &Btree{}
+	return &Btree{
+		tree: btree.New(2),
+	}
 }
 
 func (m *Btree) MergeInterval(i *model.Interval) {
-	// initialize with first element
-	if m.root == nil {
-		m.root = &Node{Interval: i}
-		return
+	item := &Item{i}
+
+	removed := m.tree.ReplaceOrInsert(item)
+	if removed != nil {
+		// the interval is overlapping, extend  with the
+		// replaced value
+		item.Interval.Extend(removed.(*Item).Interval)
 	}
 
-	m.root.MergeInterval(i)
+	var markedItems []btree.Item
+	// function will check if there is an overlapping
+	// item and then extend itself, marking all extended
+	// items for deletion
+	fn := func(i btree.Item) bool {
+		// skip self
+		if item == i {
+			return true // continue search
+		}
+
+		ival := i.(*Item).Interval
+		if ival.HasOverlap(item.Interval) {
+			ival.Extend(item.Interval)
+			// mark extend items for later deletion
+			markedItems = append(markedItems, item)
+			return true // continue search
+		}
+		return false // stop search
+	}
+
+	// search for items that need to be deleted
+	// left and right from the current item
+	m.tree.DescendLessOrEqual(item, fn)
+	m.tree.AscendGreaterOrEqual(item, fn)
+
+	for _, mi := range markedItems {
+		m.tree.Delete(mi)
+	}
 }
 
 func (m *Btree) Result() []*model.Interval {
-	if m.root == nil {
-		return nil
-	}
 	var list []*model.Interval
-	m.root.Result(&list)
-	m.root = nil
+	m.tree.Ascend(func(i btree.Item) bool {
+		it := i.(*Item)
+		list = append(list, it.Interval)
+		return true
+	})
+	m.tree.Clear(false)
 	return list
 }
 
-type Node struct {
-	Before, After *Node
-	Interval      *model.Interval
+type Item struct {
+	*model.Interval
 }
 
-func (m *Node) MergeInterval(i *model.Interval) {
-	// if the new interval brings an overlap
-	// extend the current node
-	if m.Interval.HasOverlap(i) {
-		m.Interval.Extend(i)
-
-		// check if this node is now overlapping with
-		// before or after nodes
-		if m.Before != nil && m.Before.Interval.HasOverlap(m.Interval) {
-			m.Interval.Extend(m.Before.Interval)
-			m.Before = m.Before.Before
-		}
-
-		if m.After != nil && m.After.Interval.HasOverlap(m.Interval) {
-			m.Interval.Extend(m.After.Interval)
-			m.After = m.After.After
-		}
-
-		return
-	}
-
-	// else add new node
-	if i.Before(m.Interval) {
-		if m.Before != nil {
-			m.Before.MergeInterval(i)
-		} else {
-			m.Before = &Node{Interval: i}
-		}
-	} else {
-		if m.After != nil {
-			m.After.MergeInterval(i)
-		} else {
-			m.After = &Node{Interval: i}
-		}
-	}
-}
-
-func (m *Node) Result(list *[]*model.Interval) {
-	if m.Before != nil {
-		m.Before.Result(list)
-	}
-	*list = append(*list, m.Interval)
-	if m.After != nil {
-		m.After.Result(list)
-	}
+func (i Item) Less(bi btree.Item) bool {
+	return i.Interval.Before(bi.(*Item).Interval)
 }
